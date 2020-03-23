@@ -1,5 +1,6 @@
 package make.money.share.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import make.money.share.mapper.CodeMapper;
 import make.money.share.mapper.SharesMapper;
@@ -20,6 +21,8 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration      //1.主要用于标记配置类，兼备Component的效果。
@@ -136,7 +139,51 @@ public class GetSharesController {
         httpClient.close();
         System.out.println("end");
     }
+    //策略
+    @Scheduled(cron = "0 0 21 ? * MON-FRI")
+    public void analyseShares() {
+        for(Code code : codeList){
+            QueryWrapper<Shares> queryWrapper1  = new QueryWrapper<>();
+            queryWrapper1.lambda().eq(Shares::getName,code.getName());
+            queryWrapper1.orderByDesc("happentime");
+            queryWrapper1.last("limit 1");
+            List<Shares> listSharesOne = sharesMapper.selectList(queryWrapper1);
+            if(listSharesOne.size() == 1){
+                double nowprice = listSharesOne.get(0).getNowprice();
+                double fiveday = listSharesOne.get(0).getFiveday();
+                double tenday = listSharesOne.get(0).getTenday();
+                double twentyday = listSharesOne.get(0).getTwentyday();
+                List<Double> listMM = new ArrayList<>();
+                listMM.add(nowprice);
+                if(fiveday != 0) listMM.add(fiveday);
+                if(tenday != 0) listMM.add(tenday);
+                if(twentyday != 0) listMM.add(twentyday);
 
+                double max = Collections.max(listMM);
+                double min = Collections.min(listMM);
+                if(listMM.size() > 1 && (max - min) < 2){
+                    System.out.println("均线接近，上升或下升空间打开：" + code.getName());
+                }
+
+                if(twentyday !=0 && (nowprice - twentyday) > 5 ){
+                    System.out.println("20均线和k线差距大：" + code.getName());
+                }
+            }
+
+
+            QueryWrapper<Shares> queryWrapper  = new QueryWrapper<>();
+            queryWrapper.lambda().eq(Shares::getName,code.getName());
+            queryWrapper.orderByDesc("happentime");
+            queryWrapper.last("limit 5");
+            List<Shares> listShares = sharesMapper.selectList(queryWrapper);
+            if(listShares.size() == 5){
+                if((listShares.get(0).getNowprice() - listShares.get(4).getNowprice()) / listShares.get(4).getNowprice() > 0.05){
+                    System.out.println("一周内涨幅较大：" + code.getName());
+                }
+            }
+
+        }
+    }
 
     @PostConstruct
     public void getCode(){
