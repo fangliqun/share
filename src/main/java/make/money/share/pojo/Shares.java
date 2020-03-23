@@ -35,4 +35,18 @@ public class Shares implements Serializable {
     //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss", timezone = "GMT+8")
     private Date happentime;
 
+    private double oneday;
+
+    private double fiveday;
+
+    private double fiveslope;
+
+    private double tenday;
+
+    private double tenslope;
+
+    private double twentyday;
+
+    private double twentyslope;
+
 }
