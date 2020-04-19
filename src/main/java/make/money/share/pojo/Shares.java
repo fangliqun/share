@@ -49,4 +49,8 @@ public class Shares implements Serializable {
 
     private double twentyslope;
 
+    private double thirtyday;
+
+    private double thirtyslope;
+
 }
