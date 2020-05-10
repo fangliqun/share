@@ -11,7 +11,7 @@
  Target Server Version : 80018
  File Encoding         : 65001
 
- Date: 23/03/2020 14:46:31
+ Date: 10/05/2020 13:07:17
 */
 
 SET NAMES utf8mb4;
@@ -27,7 +27,7 @@ CREATE TABLE `code`  (
   `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `exchang` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '交易所',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5924 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of code
@@ -574,7 +574,6 @@ INSERT INTO `code` VALUES (965, 'sh600627', '上电股份', '上交所');
 INSERT INTO `code` VALUES (966, 'sh600628', '新世界', '上交所');
 INSERT INTO `code` VALUES (967, 'sh600629', '华建集团', '上交所');
 INSERT INTO `code` VALUES (968, 'sh600630', '龙头股份', '上交所');
-INSERT INTO `code` VALUES (969, 'sh600631', '百联股份', '上交所');
 INSERT INTO `code` VALUES (970, 'sh600632', '华联商厦', '上交所');
 INSERT INTO `code` VALUES (971, 'sh600633', '浙数文化', '上交所');
 INSERT INTO `code` VALUES (972, 'sh600634', '*ST富控', '上交所');
@@ -775,7 +774,6 @@ INSERT INTO `code` VALUES (1166, 'sh600828', '茂业商业', '上交所');
 INSERT INTO `code` VALUES (1167, 'sh600829', '人民同泰', '上交所');
 INSERT INTO `code` VALUES (1168, 'sh600830', '香溢融通', '上交所');
 INSERT INTO `code` VALUES (1169, 'sh600831', '广电网络', '上交所');
-INSERT INTO `code` VALUES (1170, 'sh600832', '东方明珠', '上交所');
 INSERT INTO `code` VALUES (1171, 'sh600833', '第一医药', '上交所');
 INSERT INTO `code` VALUES (1172, 'sh600834', '申通地铁', '上交所');
 INSERT INTO `code` VALUES (1173, 'sh600835', '上海机电', '上交所');
@@ -3518,7 +3516,6 @@ INSERT INTO `code` VALUES (3909, 'sz300357', '我武生物', '深交所');
 INSERT INTO `code` VALUES (3910, 'sz300358', '楚天科技', '深交所');
 INSERT INTO `code` VALUES (3911, 'sz300359', '全通教育', '深交所');
 INSERT INTO `code` VALUES (3912, 'sz300360', '炬华科技', '深交所');
-INSERT INTO `code` VALUES (3913, 'sz300361', '奥赛康', '深交所');
 INSERT INTO `code` VALUES (3914, 'sz300362', '天翔环境', '深交所');
 INSERT INTO `code` VALUES (3915, 'sz300363', '博腾股份', '深交所');
 INSERT INTO `code` VALUES (3916, 'sz300364', '中文在线', '深交所');

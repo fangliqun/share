@@ -1,10 +1,14 @@
 package make.money.share.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import make.money.share.mapper.ResultMapper;
 import make.money.share.mapper.SharesMapper;
+import make.money.share.mapper.UserMapper;
 import make.money.share.pojo.Code;
+import make.money.share.pojo.Result;
 import make.money.share.pojo.Shares;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -12,12 +16,24 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-
+//成交额在5000w上
 @Service
 public class AnalyseService {
 
     @Autowired
     private SharesMapper sharesMapper;
+
+    @Autowired
+    private ResultMapper resultMapper;
+
+    @Autowired
+    private UserService userService;
+
+    @Value("${result.windows}")
+    private int windwos;
+
+    @Value("${result.linux}")
+    private int linux;
 
     private Map<Double,String> mapSX = new HashMap();
     private List<Double> listSX = new ArrayList();
@@ -55,14 +71,14 @@ public class AnalyseService {
                 double max = Collections.max(listMM);
                 double min = Collections.min(listMM);
                 double avg = (max - min)/nowprice;
-                if(listMM.size() > 2 && avg > 0 && avg < 0.002){
+                if(listMM.size() > 2 && avg > 0 && avg < 0.02 && sharesone.getTotal()>10000 && nowprice>10){
                     listSX.add(avg);
-                    mapSX.put(avg,avg + code.getName());
+                    mapSX.put(avg,avg +" "+ code.getName());
                 }
                 double distance = (nowprice - twentyday)/nowprice;
-                if(twentyday !=0 && (distance> 0.2 || distance < -0.2)){//0.02
+                if(twentyday !=0 && (distance> 0.2 || distance < -0.2) && sharesone.getTotal()>10000){//0.02
                     listDis.add(distance);
-                    mapDis.put(distance,distance + code.getName());
+                    mapDis.put(distance,distance +" "+ code.getName());
                 }
             }
 
@@ -73,16 +89,16 @@ public class AnalyseService {
             List<Shares> listShares = sharesMapper.selectList(queryWrapper);
             if(listShares.size() == 5){
                 double addreduce = (listShares.get(0).getNowprice() - listShares.get(4).getNowprice()) / listShares.get(4).getNowprice();
-                if( addreduce > 0.2 || addreduce < -0.2){
+                if( (addreduce > 0.2 || addreduce < -0.2) && listShares.get(0).getTotal()>10000){
                     listAr.add(addreduce);
-                    mapAr.put(addreduce,addreduce + code.getName());
+                    mapAr.put(addreduce,addreduce +" "+ code.getName());
                 }
                 double avg = (listShares.get(0).getTotal() + listShares.get(1).getTotal()
                         + listShares.get(2).getTotal() + listShares.get(3).getTotal() + listShares.get(4).getTotal())/5;
                 double result = (listShares.get(0).getTotal()- avg)/avg;
-                if(result > 1.5 || result < -0.8){
+                if((result > 1.5 || result < -0.8) && listShares.get(0).getTotal()>10000){
                     listRes.add(result);
-                    mapRes.put(result,result + code.getName());
+                    mapRes.put(result,result +" "+ code.getName());
                 }
             }
         } catch (Exception e) {
@@ -91,48 +107,109 @@ public class AnalyseService {
     }
 
     public void toTesult() throws IOException {
+        String toUser = "";
+        Collections.sort(listSX);
+        Collections.reverse(listSX);
+        toUser = toUser + "均线接近，上升或下升空间打开：";
+        for(double sx : listSX){
+            String r = mapSX.get(sx);
+            toUser = toUser + r;
+            Result result = new Result();
+            result.setNumber(Double.parseDouble(r.split(" ")[0]));
+            result.setName(r.split(" ")[1]);
+            result.setType(1);
+            result.setHappentime(LocalDate.now());
+            resultMapper.insert(result);
+        }
+        Collections.sort(listDis);
+        Collections.reverse(listDis);
+        toUser = toUser + "20均线和k线差距大：";
+        for(double sx : listDis){
+            String r = mapDis.get(sx);
+            toUser = toUser + r;
+            Result result = new Result();
+            result.setNumber(Double.parseDouble(r.split(" ")[0]));
+            result.setName(r.split(" ")[1]);
+            result.setType(2);
+            result.setHappentime(LocalDate.now());
+            resultMapper.insert(result);
+        }
+        Collections.sort(listAr);
+        Collections.reverse(listAr);
+        toUser = toUser + "一周内涨幅或者跌幅较大：";
+        for(double sx : listAr){
+            String r = mapAr.get(sx);
+            toUser = toUser + r;
+            Result result = new Result();
+            result.setNumber(Double.parseDouble(r.split(" ")[0]));
+            result.setName(r.split(" ")[1]);
+            result.setType(3);
+            result.setHappentime(LocalDate.now());
+            resultMapper.insert(result);
+        }
+        Collections.sort(listRes);
+        Collections.reverse(listRes);
+        toUser = toUser + "放量较多或者缩量较多：";
+        for(double sx : listRes){
+            String r = mapRes.get(sx);
+            toUser = toUser + r;
+            Result result = new Result();
+            result.setNumber(Double.parseDouble(r.split(" ")[0]));
+            result.setName(r.split(" ")[1]);
+            result.setType(4);
+            result.setHappentime(LocalDate.now());
+            resultMapper.insert(result);
+        }
+
+        if(windwos == 1){
+            resultWindwos();
+        }
+
+        System.out.println("结果："+toUser);
+        userService.send(toUser);
+
+        mapSX.clear();listSX.clear();
+        mapDis.clear();listDis.clear();
+        mapAr.clear();listAr.clear();
+        mapRes.clear();listRes.clear();
+
+        System.out.println("analyse  result  end ..........");
+    }
+
+    public void resultWindwos() throws IOException {
         FileWriter fileWritter = new FileWriter("C:\\Users\\heqiang\\Desktop\\shares.txt",true);
         fileWritter.write("=======================result start==="+ LocalDate.now()+"================" + "\r\n");
 
         fileWritter.write("=======================均线接近，上升或下升空间打开 start======================" + "\r\n");
-        Collections.sort(listSX);
-        Collections.reverse(listSX);
         for(double sx : listSX){
-            fileWritter.write("均线接近，上升或下升空间打开："+ mapSX.get(sx) + "\r\n");
+            String r = mapSX.get(sx);
+            fileWritter.write("均线接近，上升或下升空间打开："+ r + "\r\n");
         }
         fileWritter.write("=======================均线接近，上升或下升空间打开 end======================" + "\r\n");
 
         fileWritter.write("=======================20均线和k线差距大 start======================" + "\r\n");
-        Collections.sort(listDis);
-        Collections.reverse(listDis);
         for(double sx : listDis){
-            fileWritter.write("20均线和k线差距大："+ mapDis.get(sx) + "\r\n");
+            String r = mapDis.get(sx);
+            fileWritter.write("20均线和k线差距大："+ r + "\r\n");
         }
         fileWritter.write("=======================20均线和k线差距大 end======================" + "\r\n");
 
         fileWritter.write("=======================一周内涨幅或者跌幅较大 start======================" + "\r\n");
-        Collections.sort(listAr);
-        Collections.reverse(listAr);
         for(double sx : listAr){
-            fileWritter.write("一周内涨幅或者跌幅较大："+ mapAr.get(sx) + "\r\n");
+            String r = mapAr.get(sx);
+            fileWritter.write("一周内涨幅或者跌幅较大："+ r + "\r\n");
         }
         fileWritter.write("=======================一周内涨幅或者跌幅较大 end======================" + "\r\n");
 
         fileWritter.write("=======================放量较多或者缩量较多 start======================" + "\r\n");
-        Collections.sort(listRes);
-        Collections.reverse(listRes);
         for(double sx : listRes){
-            fileWritter.write("放量较多或者缩量较多："+ mapRes.get(sx) + "\r\n");
+            String r = mapRes.get(sx);
+            fileWritter.write("放量较多或者缩量较多："+ r + "\r\n");
         }
         fileWritter.write("=======================放量较多或者缩量较多 end======================" + "\r\n");
 
         fileWritter.write("=======================result end======================" + "\r\n");
         fileWritter.write("\r\n\r\n\r\n");
         fileWritter.close();
-
-        mapSX.clear();listSX.clear();
-        mapDis.clear();listDis.clear();
-        mapAr.clear();listAr.clear();
-        mapRes.clear();listRes.clear();
     }
 }
