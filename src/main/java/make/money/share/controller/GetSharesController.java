@@ -31,7 +31,7 @@ public class GetSharesController {
 
     List<Code> codeList;
 //    3.添加定时任务 13秒
-    @Scheduled(cron = "0 11 22 ? * 1-7")
+    @Scheduled(cron = "0 30 17 ? * 1-7")
     public void getShare() throws InterruptedException, IOException {
         FileWriter fileWritter = new FileWriter("C:\\Users\\heqiang\\Desktop\\err.txt",true);
         fileWritter.write("=======================getShare start==="+LocalDate.now()+"================" + "\r\n");
@@ -60,12 +60,12 @@ public class GetSharesController {
         fileWritter.close();
     }
     //策略  40秒  10秒出结果 连接阿里云更慢 但是要考虑结束输出时间
-    @Scheduled(cron = "0 12 16 ? * 1-7")
+    @Scheduled(cron = "0 50 17 ? * 1-7")
     public void analyseShar0() throws IOException, InterruptedException {
         for(Code code : codeList){
             analyseService.analyseShares(code);
         }
-        Thread.sleep(1000*60*2);
+        Thread.sleep(1000*60*20);
         System.out.println("analyse  result  to ........");
         analyseService.toTesult();
     }
