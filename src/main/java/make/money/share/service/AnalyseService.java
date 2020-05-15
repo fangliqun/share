@@ -161,6 +161,21 @@ public class AnalyseService {
             resultMapper.insert(result);
         }
 
+        toUser = toUser + "最近两天出现次数：";
+        QueryWrapper<Result> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().ge(Result::getHappentime,LocalDate.now());
+        queryWrapper.select("distinct(name) as name");
+        List<Result> list = resultMapper.selectList(queryWrapper);
+        for(Result result : list){
+            QueryWrapper<Result> queryWrapperY = new QueryWrapper<>();
+            queryWrapperY.lambda().ge(Result::getHappentime,LocalDate.now().plusDays(-1));
+            queryWrapperY.lambda().eq(Result::getName,result.getName());
+            List<Result> listY = resultMapper.selectList(queryWrapperY);
+            if(listY != null && !listY.isEmpty()){
+                toUser = toUser + result.getName()+"  "+listY.size()+" ";
+            }
+        }
+
         if(windwos == 1){
             resultWindwos();
         }
