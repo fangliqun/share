@@ -21,6 +21,8 @@ public class Result implements Serializable {
     private int id;
 
     private String name;
+
+    private String code;
     //分析结果值
     private double number;
 

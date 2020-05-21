@@ -1,12 +1,18 @@
 package make.money.share.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import make.money.share.mapper.CodeMapper;
+import make.money.share.mapper.ResultMapper;
+import make.money.share.mapper.SharesMapper;
 import make.money.share.pojo.Code;
+import make.money.share.pojo.Result;
+import make.money.share.pojo.Shares;
 import make.money.share.service.AnalyseService;
 import make.money.share.service.SharesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -28,6 +34,12 @@ public class GetSharesController {
 
     @Autowired
     private AnalyseService analyseService;
+
+    @Autowired
+    private SharesMapper sharesMapper;
+
+    @Autowired
+    private ResultMapper resultMapper;
 
     List<Code> codeList;
 //    3.添加定时任务 13秒
@@ -75,5 +87,27 @@ public class GetSharesController {
         System.out.println("get all code");
         QueryWrapper<Code> codeQueryWrapper = new QueryWrapper<>();
         codeList = codeMapper.selectList(codeQueryWrapper);
+
+        //更新code
+//        for(Code code : codeList){
+//            if(code.getName() != null && code.getCode()!= null){
+//                updateCode(code);
+//            }
+//        }
     }
+    @Async
+    public void  updateCode(Code code){
+        UpdateWrapper<Result> resultUpdateWrapper = new UpdateWrapper<>();
+        resultUpdateWrapper.eq("name", code.getName());
+        Result result = new Result();
+        result.setCode(code.getCode());
+        resultMapper.update(result, resultUpdateWrapper);
+
+        UpdateWrapper<Shares> sharesUpdateWrapper = new UpdateWrapper<>();
+        sharesUpdateWrapper.eq("name", code.getName());
+        Shares shares = new Shares();
+        shares.setCode(code.getCode());
+        sharesMapper.update(shares, sharesUpdateWrapper);
+    }
+
 }

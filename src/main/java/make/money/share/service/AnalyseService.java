@@ -16,7 +16,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-//成交额在5000w上
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+//成交额在1亿上 不包含证券等
+
+//1 均线接近，上升或下升空间打开
+//2 20均线和k线差距大
+//3 一周内涨幅或者跌幅较大
+//4 放量较多或者缩量较多
+//  最近两天出现次数
 @Service
 public class AnalyseService {
 
@@ -47,6 +56,14 @@ public class AnalyseService {
     private Map<Double,String> mapRes = new HashMap();
     private List<Double> listRes = new ArrayList();
 
+    private static List<String> str = new ArrayList();
+
+    static{
+        str.add("银行");
+        str.add("证券");
+        str.add("钢铁");
+    }
+
     @Async
     public void analyseShares(Code code){
         try {
@@ -72,13 +89,29 @@ public class AnalyseService {
                 double min = Collections.min(listMM);
                 double avg = (max - min)/nowprice;
                 if(listMM.size() > 2 && avg > 0 && avg < 0.02 && sharesone.getTotal()>10000 && nowprice>10){
-                    listSX.add(avg);
-                    mapSX.put(avg,avg +" "+ code.getName());
+                    boolean flag = false;
+                    for(int i=0; i < str.size(); i++){
+                        if(code.getName().contains(str.get(i))){
+                            flag = true;
+                        }
+                    }
+                    if(flag == false){
+                        listSX.add(avg);
+                        mapSX.put(avg,avg +" "+ code.getName() +" " +code.getCode());
+                    }
                 }
                 double distance = (nowprice - twentyday)/nowprice;
                 if(twentyday !=0 && (distance> 0.2 || distance < -0.2) && sharesone.getTotal()>10000){//0.02
-                    listDis.add(distance);
-                    mapDis.put(distance,distance +" "+ code.getName());
+                    boolean flag = false;
+                    for(int i=0; i < str.size(); i++){
+                        if(code.getName().contains(str.get(i))){
+                            flag = true;
+                        }
+                    }
+                    if(flag == false){
+                        listDis.add(distance);
+                        mapDis.put(distance,distance +" "+ code.getName() +" " +code.getCode());
+                    }
                 }
             }
 
@@ -90,15 +123,31 @@ public class AnalyseService {
             if(listShares.size() == 5){
                 double addreduce = (listShares.get(0).getNowprice() - listShares.get(4).getNowprice()) / listShares.get(4).getNowprice();
                 if( (addreduce > 0.2 || addreduce < -0.2) && listShares.get(0).getTotal()>10000){
-                    listAr.add(addreduce);
-                    mapAr.put(addreduce,addreduce +" "+ code.getName());
+                    boolean flag = false;
+                    for(int i=0; i < str.size(); i++){
+                        if(code.getName().contains(str.get(i))){
+                            flag = true;
+                        }
+                    }
+                    if(flag == false){
+                        listAr.add(addreduce);
+                        mapAr.put(addreduce,addreduce +" "+ code.getName() +" " +code.getCode());
+                    }
                 }
                 double avg = (listShares.get(0).getTotal() + listShares.get(1).getTotal()
                         + listShares.get(2).getTotal() + listShares.get(3).getTotal() + listShares.get(4).getTotal())/5;
                 double result = (listShares.get(0).getTotal()- avg)/avg;
                 if((result > 1.5 || result < -0.8) && listShares.get(0).getTotal()>10000){
-                    listRes.add(result);
-                    mapRes.put(result,result +" "+ code.getName());
+                    boolean flag = false;
+                    for(int i=0; i < str.size(); i++){
+                        if(code.getName().contains(str.get(i))){
+                            flag = true;
+                        }
+                    }
+                    if(flag == false){
+                        listRes.add(result);
+                        mapRes.put(result,result +" "+ code.getName() +" " +code.getCode());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -117,6 +166,7 @@ public class AnalyseService {
             Result result = new Result();
             result.setNumber(Double.parseDouble(r.split(" ")[0]));
             result.setName(r.split(" ")[1]);
+            result.setCode(r.split(" ")[2]);
             result.setType(1);
             result.setHappentime(LocalDate.now());
             resultMapper.insert(result);
@@ -130,6 +180,7 @@ public class AnalyseService {
             Result result = new Result();
             result.setNumber(Double.parseDouble(r.split(" ")[0]));
             result.setName(r.split(" ")[1]);
+            result.setCode(r.split(" ")[2]);
             result.setType(2);
             result.setHappentime(LocalDate.now());
             resultMapper.insert(result);
@@ -143,6 +194,7 @@ public class AnalyseService {
             Result result = new Result();
             result.setNumber(Double.parseDouble(r.split(" ")[0]));
             result.setName(r.split(" ")[1]);
+            result.setCode(r.split(" ")[2]);
             result.setType(3);
             result.setHappentime(LocalDate.now());
             resultMapper.insert(result);
@@ -156,6 +208,7 @@ public class AnalyseService {
             Result result = new Result();
             result.setNumber(Double.parseDouble(r.split(" ")[0]));
             result.setName(r.split(" ")[1]);
+            result.setCode(r.split(" ")[2]);
             result.setType(4);
             result.setHappentime(LocalDate.now());
             resultMapper.insert(result);
@@ -172,7 +225,7 @@ public class AnalyseService {
             queryWrapperY.lambda().eq(Result::getName,result.getName());
             List<Result> listY = resultMapper.selectList(queryWrapperY);
             if(listY != null && !listY.isEmpty()){
-                toUser = toUser + result.getName()+"  "+listY.size()+" ";
+                toUser = toUser + result.getName()+result.getCode()+" "+listY.size()+"   ";
             }
         }
 

@@ -23,6 +23,8 @@ public class Shares implements Serializable {
     private int id;
     //股票名字
     private String name;
+
+    private String code;
     //当前价格
     private double nowprice;
     //成交的股票数 一百股为一手

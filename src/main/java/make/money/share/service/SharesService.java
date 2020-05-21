@@ -44,9 +44,10 @@ public class SharesService {
                 String datas[] = string.split("\n");
                 for (String data : datas) {
                     if (data.split("=")[1].length() > 5) {
+                        Shares shares = new Shares();
+                        shares.setCode(data.substring(11,19));
                         data = data.substring(data.indexOf("\"") + 1, data.length() - 2);
                         String shareData[] = data.split(",");
-                        Shares shares = new Shares();
                         shares.setName(shareData[0]);
                         shares.setNowprice(Double.parseDouble(shareData[3]));
                         if (0 == Double.parseDouble(shareData[3])) {
