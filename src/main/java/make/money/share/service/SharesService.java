@@ -2,14 +2,17 @@ package make.money.share.service;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import make.money.share.mapper.SharesDataMapper;
 import make.money.share.mapper.SharesMapper;
 import make.money.share.pojo.Shares;
+import make.money.share.pojo.SharesData;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,9 @@ public class SharesService {
 
     @Autowired
     private SharesMapper sharesMapper;
+
+    @Autowired
+    private SharesDataMapper sharesDataMapper;
 
     @Async
     public void  insertShare(String codes){
@@ -125,6 +131,10 @@ public class SharesService {
                         if (sharesone == null || (sharesone.getNowprice() != Double.parseDouble(shareData[3]) &&
                                 sharesone.getTotal() != Long.parseLong(shareData[9].split("\\.")[0]) / 10000)) {
                             sharesMapper.insert(shares);
+                            //备份数据
+                            SharesData sharesData  = new SharesData();
+                            BeanUtils.copyProperties(shares,sharesData);
+                            sharesDataMapper.insert(sharesData);
                         }else{
                             System.out.println("数据重复：" + shareData[0]);
                         }

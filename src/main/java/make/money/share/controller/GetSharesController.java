@@ -97,17 +97,19 @@ public class GetSharesController {
     }
     @Async
     public void  updateCode(Code code){
-        UpdateWrapper<Result> resultUpdateWrapper = new UpdateWrapper<>();
-        resultUpdateWrapper.eq("name", code.getName());
-        Result result = new Result();
-        result.setCode(code.getCode());
-        resultMapper.update(result, resultUpdateWrapper);
+//        UpdateWrapper<Result> resultUpdateWrapper = new UpdateWrapper<>();
+//        resultUpdateWrapper.eq("name", code.getName());
+//        Result result = new Result();
+//        result.setCode(code.getCode());
+//        resultMapper.update(result, resultUpdateWrapper);
 
-        UpdateWrapper<Shares> sharesUpdateWrapper = new UpdateWrapper<>();
-        sharesUpdateWrapper.eq("name", code.getName());
-        Shares shares = new Shares();
-        shares.setCode(code.getCode());
-        sharesMapper.update(shares, sharesUpdateWrapper);
+        //注意默认 导致所有数据为0
+//        UpdateWrapper<Shares> sharesUpdateWrapper = new UpdateWrapper<>();
+//        sharesUpdateWrapper.eq("name", code.getName());
+//        sharesUpdateWrapper.setSql("update shares set code");
+//        Shares shares = new Shares();
+//        shares.setCode(code.getCode());
+        sharesMapper.updateCode(code.getName(),code.getCode());
     }
 
 }

@@ -97,7 +97,7 @@ public class AnalyseService {
                     }
                     if(flag == false){
                         listSX.add(avg);
-                        mapSX.put(avg,avg +" "+ code.getName() +" " +code.getCode());
+                        mapSX.put(avg,avg +" "+ code.getCode() +" " +code.getName());
                     }
                 }
                 double distance = (nowprice - twentyday)/nowprice;
@@ -110,7 +110,7 @@ public class AnalyseService {
                     }
                     if(flag == false){
                         listDis.add(distance);
-                        mapDis.put(distance,distance +" "+ code.getName() +" " +code.getCode());
+                        mapDis.put(distance,distance +" "+ code.getCode() +" " +code.getName());
                     }
                 }
             }
@@ -131,7 +131,7 @@ public class AnalyseService {
                     }
                     if(flag == false){
                         listAr.add(addreduce);
-                        mapAr.put(addreduce,addreduce +" "+ code.getName() +" " +code.getCode());
+                        mapAr.put(addreduce,addreduce +" "+ code.getCode() +" " +code.getName());
                     }
                 }
                 double avg = (listShares.get(0).getTotal() + listShares.get(1).getTotal()
@@ -146,7 +146,7 @@ public class AnalyseService {
                     }
                     if(flag == false){
                         listRes.add(result);
-                        mapRes.put(result,result +" "+ code.getName() +" " +code.getCode());
+                        mapRes.put(result,result +" "+ code.getCode() +" " +code.getName());
                     }
                 }
             }
@@ -215,18 +215,16 @@ public class AnalyseService {
         }
 
         toUser = toUser + "最近两天出现次数：";
-        QueryWrapper<Result> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().ge(Result::getHappentime,LocalDate.now());
-        queryWrapper.select("distinct(name) as name");
-        List<Result> list = resultMapper.selectList(queryWrapper);
-        for(Result result : list){
-            QueryWrapper<Result> queryWrapperY = new QueryWrapper<>();
-            queryWrapperY.lambda().ge(Result::getHappentime,LocalDate.now().plusDays(-1));
-            queryWrapperY.lambda().eq(Result::getName,result.getName());
-            List<Result> listY = resultMapper.selectList(queryWrapperY);
-            if(listY != null && !listY.isEmpty()){
-                toUser = toUser + result.getName()+result.getCode()+" "+listY.size()+"   ";
-            }
+
+        List<Map<String,Object>> list = resultMapper.getResult(LocalDate.now().plusDays(-1));
+//        Collections.sort(list, new Comparator<Map<String,Object>>() {
+//            @Override
+//            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+//                return Integer.parseInt((String) o1.get("counts"))  - Integer.parseInt((String) o2.get("counts"));
+//            }
+//        });
+        for(Map<String,Object> map : list){
+            toUser = toUser + map.get("name")+map.get("code")+" "+map.get("counts")+"   ";
         }
 
         if(windwos == 1){
