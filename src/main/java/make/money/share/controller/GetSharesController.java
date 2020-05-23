@@ -73,7 +73,7 @@ public class GetSharesController {
     }
     //策略  40秒  10秒出结果 连接阿里云更慢 但是要考虑结束输出时间
     @Scheduled(cron = "0 50 17 ? * 1-7")
-    public void analyseShar0() throws IOException, InterruptedException {
+    public void analyseShare() throws IOException, InterruptedException {
         for(Code code : codeList){
             analyseService.analyseShares(code);
         }
@@ -82,19 +82,14 @@ public class GetSharesController {
         analyseService.toTesult();
     }
 
-    @PostConstruct
+    @Scheduled(cron = "0 20 17 ? * 1-7")
     public void getCode(){
         System.out.println("get all code");
         QueryWrapper<Code> codeQueryWrapper = new QueryWrapper<>();
         codeList = codeMapper.selectList(codeQueryWrapper);
-
-        //更新code
-//        for(Code code : codeList){
-//            if(code.getName() != null && code.getCode()!= null){
-//                updateCode(code);
-//            }
-//        }
     }
+
+//    @PostConstruct
     @Async
     public void  updateCode(Code code){
 //        UpdateWrapper<Result> resultUpdateWrapper = new UpdateWrapper<>();

@@ -1,5 +1,6 @@
 package make.money.share.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import make.money.share.mapper.CodeMapper;
 import make.money.share.mapper.SharesMapper;
 import make.money.share.pojo.Code;
@@ -19,8 +20,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-//@Configuration      //1.主要用于标记配置类，兼备Component的效果。
-//@EnableScheduling   // 2.开启定时任务
+@Configuration      //1.主要用于标记配置类，兼备Component的效果。
+@EnableScheduling   // 2.开启定时任务  每周一删除所有的代码 在更新进去 以前代码废弃 分析也没用
 public class GetCodeController {
 
     @Autowired
@@ -28,9 +29,12 @@ public class GetCodeController {
 
     //3.添加定时任务
 //    @Scheduled(cron = "0/20 * * * * ?")
-//    @Scheduled(cron = "0 10 15 ? * MON-FRI")
+    @Scheduled(cron = "0 00 17 ? * 7")
     public void getShare() throws IOException, ParseException {
         System.out.println("start");
+        QueryWrapper wrapper = new QueryWrapper<>();
+        codeMapper.delete(wrapper);
+
         //1.打开浏览器
         CloseableHttpClient httpClient = HttpClients.createDefault();
         System.out.println("上交所");

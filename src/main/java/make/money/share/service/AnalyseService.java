@@ -3,7 +3,6 @@ package make.money.share.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import make.money.share.mapper.ResultMapper;
 import make.money.share.mapper.SharesMapper;
-import make.money.share.mapper.UserMapper;
 import make.money.share.pojo.Code;
 import make.money.share.pojo.Result;
 import make.money.share.pojo.Shares;
@@ -16,8 +15,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 //成交额在1亿上 不包含证券等
 
@@ -44,19 +41,12 @@ public class AnalyseService {
     @Value("${result.linux}")
     private int linux;
 
-    private Map<Double,String> mapSX = new HashMap();
-    private List<Double> listSX = new ArrayList();
-
-    private Map<Double,String> mapDis = new HashMap();
-    private List<Double> listDis = new ArrayList();
-
-    private Map<Double,String> mapAr = new HashMap();
-    private List<Double> listAr = new ArrayList();
-
-    private Map<Double,String> mapRes = new HashMap();
-    private List<Double> listRes = new ArrayList();
-
     private static List<String> str = new ArrayList();
+
+    private List<Result> listSX = new ArrayList<>();
+    private List<Result> listDis = new ArrayList<>();
+    private List<Result> listAr = new ArrayList<>();
+    private List<Result> listRes = new ArrayList<>();
 
     static{
         str.add("银行");
@@ -96,8 +86,13 @@ public class AnalyseService {
                         }
                     }
                     if(flag == false){
-                        listSX.add(avg);
-                        mapSX.put(avg,avg +" "+ code.getCode() +" " +code.getName());
+                        Result result = new Result();
+                        result.setNumber(avg);
+                        result.setName(code.getName());
+                        result.setCode(code.getCode());
+                        result.setType(1);
+                        result.setHappentime(LocalDate.now());
+                        listSX.add(result);
                     }
                 }
                 double distance = (nowprice - twentyday)/nowprice;
@@ -109,8 +104,13 @@ public class AnalyseService {
                         }
                     }
                     if(flag == false){
-                        listDis.add(distance);
-                        mapDis.put(distance,distance +" "+ code.getCode() +" " +code.getName());
+                        Result result = new Result();
+                        result.setNumber(distance);
+                        result.setName(code.getName());
+                        result.setCode(code.getCode());
+                        result.setType(2);
+                        result.setHappentime(LocalDate.now());
+                        listDis.add(result);
                     }
                 }
             }
@@ -130,8 +130,13 @@ public class AnalyseService {
                         }
                     }
                     if(flag == false){
-                        listAr.add(addreduce);
-                        mapAr.put(addreduce,addreduce +" "+ code.getCode() +" " +code.getName());
+                        Result result = new Result();
+                        result.setNumber(addreduce);
+                        result.setName(code.getName());
+                        result.setCode(code.getCode());
+                        result.setType(3);
+                        result.setHappentime(LocalDate.now());
+                        listAr.add(result);
                     }
                 }
                 double avg = (listShares.get(0).getTotal() + listShares.get(1).getTotal()
@@ -145,8 +150,13 @@ public class AnalyseService {
                         }
                     }
                     if(flag == false){
-                        listRes.add(result);
-                        mapRes.put(result,result +" "+ code.getCode() +" " +code.getName());
+                        Result resultR = new Result();
+                        resultR.setNumber(result);
+                        resultR.setName(code.getName());
+                        resultR.setCode(code.getCode());
+                        resultR.setType(4);
+                        resultR.setHappentime(LocalDate.now());
+                        listRes.add(resultR);
                     }
                 }
             }
@@ -157,72 +167,76 @@ public class AnalyseService {
 
     public void toTesult() throws IOException {
         String toUser = "";
-        Collections.sort(listSX);
-        Collections.reverse(listSX);
         toUser = toUser + "均线接近，上升或下升空间打开：";
-        for(double sx : listSX){
-            String r = mapSX.get(sx);
-            toUser = toUser + r;
-            Result result = new Result();
-            result.setNumber(Double.parseDouble(r.split(" ")[0]));
-            result.setName(r.split(" ")[1]);
-            result.setCode(r.split(" ")[2]);
-            result.setType(1);
-            result.setHappentime(LocalDate.now());
+        Collections.sort(listSX, new Comparator<Result>() {
+            @Override
+            public int compare(Result o1, Result o2) {
+                double n1 =  o1.getNumber();
+                double n2 =  o2.getNumber();
+                if (n1 > n2) { return -1;
+                } else if (n1 == n2) { return 0;
+                } else { return 1;
+                }
+            }
+        });
+        for(Result result : listSX){
+            toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
             resultMapper.insert(result);
         }
-        Collections.sort(listDis);
-        Collections.reverse(listDis);
+
         toUser = toUser + "20均线和k线差距大：";
-        for(double sx : listDis){
-            String r = mapDis.get(sx);
-            toUser = toUser + r;
-            Result result = new Result();
-            result.setNumber(Double.parseDouble(r.split(" ")[0]));
-            result.setName(r.split(" ")[1]);
-            result.setCode(r.split(" ")[2]);
-            result.setType(2);
-            result.setHappentime(LocalDate.now());
+        Collections.sort(listDis, new Comparator<Result>() {
+            @Override
+            public int compare(Result o1, Result o2) {
+                double n1 =  o1.getNumber();
+                double n2 =  o2.getNumber();
+                if (n1 > n2) { return -1;
+                } else if (n1 == n2) { return 0;
+                } else { return 1;
+                }
+            }
+        });
+        for(Result result : listDis){
+            toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
             resultMapper.insert(result);
         }
-        Collections.sort(listAr);
-        Collections.reverse(listAr);
+
         toUser = toUser + "一周内涨幅或者跌幅较大：";
-        for(double sx : listAr){
-            String r = mapAr.get(sx);
-            toUser = toUser + r;
-            Result result = new Result();
-            result.setNumber(Double.parseDouble(r.split(" ")[0]));
-            result.setName(r.split(" ")[1]);
-            result.setCode(r.split(" ")[2]);
-            result.setType(3);
-            result.setHappentime(LocalDate.now());
+        Collections.sort(listAr, new Comparator<Result>() {
+            @Override
+            public int compare(Result o1, Result o2) {
+                double n1 =  o1.getNumber();
+                double n2 =  o2.getNumber();
+                if (n1 > n2) { return -1;
+                } else if (n1 == n2) { return 0;
+                } else { return 1;
+                }
+            }
+        });
+        for(Result result : listAr){
+            toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
             resultMapper.insert(result);
         }
-        Collections.sort(listRes);
-        Collections.reverse(listRes);
+
         toUser = toUser + "放量较多或者缩量较多：";
-        for(double sx : listRes){
-            String r = mapRes.get(sx);
-            toUser = toUser + r;
-            Result result = new Result();
-            result.setNumber(Double.parseDouble(r.split(" ")[0]));
-            result.setName(r.split(" ")[1]);
-            result.setCode(r.split(" ")[2]);
-            result.setType(4);
-            result.setHappentime(LocalDate.now());
+        Collections.sort(listRes, new Comparator<Result>() {
+            @Override
+            public int compare(Result o1, Result o2) {
+                double n1 =  o1.getNumber();
+                double n2 =  o2.getNumber();
+                if (n1 > n2) { return -1;
+                } else if (n1 == n2) { return 0;
+                } else { return 1;
+                }
+            }
+        });
+        for(Result result : listRes){
+            toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
             resultMapper.insert(result);
         }
 
         toUser = toUser + "最近两天出现次数：";
-
         List<Map<String,Object>> list = resultMapper.getResult(LocalDate.now().plusDays(-1));
-//        Collections.sort(list, new Comparator<Map<String,Object>>() {
-//            @Override
-//            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-//                return Integer.parseInt((String) o1.get("counts"))  - Integer.parseInt((String) o2.get("counts"));
-//            }
-//        });
         for(Map<String,Object> map : list){
             toUser = toUser + map.get("name")+map.get("code")+" "+map.get("counts")+"   ";
         }
@@ -234,10 +248,7 @@ public class AnalyseService {
         System.out.println("结果："+toUser);
         userService.send(toUser);
 
-        mapSX.clear();listSX.clear();
-        mapDis.clear();listDis.clear();
-        mapAr.clear();listAr.clear();
-        mapRes.clear();listRes.clear();
+        listSX.clear();listDis.clear();listAr.clear();listRes.clear();
 
         System.out.println("analyse  result  end ..........");
     }
@@ -247,30 +258,26 @@ public class AnalyseService {
         fileWritter.write("=======================result start==="+ LocalDate.now()+"================" + "\r\n");
 
         fileWritter.write("=======================均线接近，上升或下升空间打开 start======================" + "\r\n");
-        for(double sx : listSX){
-            String r = mapSX.get(sx);
-            fileWritter.write("均线接近，上升或下升空间打开："+ r + "\r\n");
+        for(Result result : listSX){
+            fileWritter.write("均线接近，上升或下升空间打开："+ result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n");
         }
         fileWritter.write("=======================均线接近，上升或下升空间打开 end======================" + "\r\n");
 
         fileWritter.write("=======================20均线和k线差距大 start======================" + "\r\n");
-        for(double sx : listDis){
-            String r = mapDis.get(sx);
-            fileWritter.write("20均线和k线差距大："+ r + "\r\n");
+        for(Result result : listDis){
+            fileWritter.write("20均线和k线差距大："+ result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n");
         }
         fileWritter.write("=======================20均线和k线差距大 end======================" + "\r\n");
 
         fileWritter.write("=======================一周内涨幅或者跌幅较大 start======================" + "\r\n");
-        for(double sx : listAr){
-            String r = mapAr.get(sx);
-            fileWritter.write("一周内涨幅或者跌幅较大："+ r + "\r\n");
+        for(Result result : listAr){
+            fileWritter.write("一周内涨幅或者跌幅较大："+ result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n");
         }
         fileWritter.write("=======================一周内涨幅或者跌幅较大 end======================" + "\r\n");
 
         fileWritter.write("=======================放量较多或者缩量较多 start======================" + "\r\n");
-        for(double sx : listRes){
-            String r = mapRes.get(sx);
-            fileWritter.write("放量较多或者缩量较多："+ r + "\r\n");
+        for(Result result : listRes){
+            fileWritter.write("放量较多或者缩量较多："+ result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n");
         }
         fileWritter.write("=======================放量较多或者缩量较多 end======================" + "\r\n");
 
