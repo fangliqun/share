@@ -13,7 +13,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("shares_date") //对应表名
+@TableName("shares_data") //对应表名
 public class SharesData implements Serializable {
     //对应id，可不填
     @TableId(value = "id",type= IdType.AUTO)

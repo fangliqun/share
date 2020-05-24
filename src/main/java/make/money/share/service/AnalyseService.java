@@ -6,6 +6,8 @@ import make.money.share.mapper.SharesMapper;
 import make.money.share.pojo.Code;
 import make.money.share.pojo.Result;
 import make.money.share.pojo.Shares;
+import make.money.share.pojo.SharesData;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -22,6 +24,7 @@ import java.util.*;
 //2 20均线和k线差距大
 //3 一周内涨幅或者跌幅较大
 //4 放量较多或者缩量较多
+//5 5均线和k线差距大
 //  最近两天出现次数
 @Service
 public class AnalyseService {
@@ -45,6 +48,7 @@ public class AnalyseService {
 
     private List<Result> listSX = new ArrayList<>();
     private List<Result> listDis = new ArrayList<>();
+    private List<Result> listDis5 = new ArrayList<>();
     private List<Result> listAr = new ArrayList<>();
     private List<Result> listRes = new ArrayList<>();
 
@@ -52,13 +56,14 @@ public class AnalyseService {
         str.add("银行");
         str.add("证券");
         str.add("钢铁");
+        str.add("黄金");
     }
 
     @Async
     public void analyseShares(Code code){
         try {
             QueryWrapper<Shares> queryWrapper1  = new QueryWrapper<>();
-            queryWrapper1.lambda().eq(Shares::getName,code.getName());
+            queryWrapper1.lambda().eq(Shares::getCode,code.getCode());
             queryWrapper1.orderByDesc("happentime");
             queryWrapper1.last("limit 1");
             Shares sharesone= sharesMapper.selectOne(queryWrapper1);
@@ -78,6 +83,7 @@ public class AnalyseService {
                 double max = Collections.max(listMM);
                 double min = Collections.min(listMM);
                 double avg = (max - min)/nowprice;
+                //均线最大最小差占总数的百分之二  且成交金额大于1亿 估计大于10元
                 if(listMM.size() > 2 && avg > 0 && avg < 0.02 && sharesone.getTotal()>10000 && nowprice>10){
                     boolean flag = false;
                     for(int i=0; i < str.size(); i++){
@@ -95,8 +101,29 @@ public class AnalyseService {
                         listSX.add(result);
                     }
                 }
+                double distance5 = (nowprice - fiveday)/nowprice;
+                //5日线和现在价格差距大 提早发现  成交量大于1亿
+                if(fiveday !=0 && (distance5> 0.15) && sharesone.getTotal()>10000){//0.02
+                    boolean flag = false;
+                    for(int i=0; i < str.size(); i++){
+                        if(code.getName().contains(str.get(i))){
+                            flag = true;
+                        }
+                    }
+                    if(flag == false){
+                        Result result = new Result();
+                        result.setNumber(distance5);
+                        result.setName(code.getName());
+                        result.setCode(code.getCode());
+                        result.setType(5);
+                        result.setHappentime(LocalDate.now());
+                        listDis5.add(result);
+                    }
+                }
+
                 double distance = (nowprice - twentyday)/nowprice;
-                if(twentyday !=0 && (distance> 0.2 || distance < -0.2) && sharesone.getTotal()>10000){//0.02
+                //20日线和现在价格差距大  考虑换成5日? 提早发现?
+                if(twentyday !=0 && (distance> 0.25) && sharesone.getTotal()>10000){//0.02
                     boolean flag = false;
                     for(int i=0; i < str.size(); i++){
                         if(code.getName().contains(str.get(i))){
@@ -116,13 +143,14 @@ public class AnalyseService {
             }
 
             QueryWrapper<Shares> queryWrapper  = new QueryWrapper<>();
-            queryWrapper.lambda().eq(Shares::getName,code.getName());
+            queryWrapper.lambda().eq(Shares::getCode,code.getCode());
             queryWrapper.orderByDesc("happentime");
             queryWrapper.last("limit 5");
             List<Shares> listShares = sharesMapper.selectList(queryWrapper);
+            //一周类涨幅较大 确认板块机会？ 成交量大于1亿
             if(listShares.size() == 5){
                 double addreduce = (listShares.get(0).getNowprice() - listShares.get(4).getNowprice()) / listShares.get(4).getNowprice();
-                if( (addreduce > 0.2 || addreduce < -0.2) && listShares.get(0).getTotal()>10000){
+                if( (addreduce > 0.2) && listShares.get(0).getTotal()>10000){
                     boolean flag = false;
                     for(int i=0; i < str.size(); i++){
                         if(code.getName().contains(str.get(i))){
@@ -142,7 +170,8 @@ public class AnalyseService {
                 double avg = (listShares.get(0).getTotal() + listShares.get(1).getTotal()
                         + listShares.get(2).getTotal() + listShares.get(3).getTotal() + listShares.get(4).getTotal())/5;
                 double result = (listShares.get(0).getTotal()- avg)/avg;
-                if((result > 1.5 || result < -0.8) && listShares.get(0).getTotal()>10000){
+                // 今日成交量和过去5天成交量相比 就算今突然放量,之前成交量较小,也能识别出来  成交量大于1亿  放量较多或者缩量较多
+                if((result > 1.5 || result < -0.5) && listShares.get(0).getTotal()>10000){
                     boolean flag = false;
                     for(int i=0; i < str.size(); i++){
                         if(code.getName().contains(str.get(i))){
@@ -167,7 +196,7 @@ public class AnalyseService {
 
     public void toTesult() throws IOException {
         String toUser = "";
-        toUser = toUser + "均线接近，上升或下升空间打开：";
+        toUser = toUser + "均线接近，上升或下升空间打开："+ "\r\n";
         Collections.sort(listSX, new Comparator<Result>() {
             @Override
             public int compare(Result o1, Result o2) {
@@ -181,10 +210,27 @@ public class AnalyseService {
         });
         for(Result result : listSX){
             toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
-            resultMapper.insert(result);
+            isSameResult(result);
         }
 
-        toUser = toUser + "20均线和k线差距大：";
+        toUser = toUser + "5均线和k线差距大："+ "\r\n";
+        Collections.sort(listDis5, new Comparator<Result>() {
+            @Override
+            public int compare(Result o1, Result o2) {
+                double n1 =  o1.getNumber();
+                double n2 =  o2.getNumber();
+                if (n1 > n2) { return -1;
+                } else if (n1 == n2) { return 0;
+                } else { return 1;
+                }
+            }
+        });
+        for(Result result : listDis5){
+            toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
+            isSameResult(result);
+        }
+
+        toUser = toUser + "20均线和k线差距大："+ "\r\n";
         Collections.sort(listDis, new Comparator<Result>() {
             @Override
             public int compare(Result o1, Result o2) {
@@ -198,10 +244,10 @@ public class AnalyseService {
         });
         for(Result result : listDis){
             toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
-            resultMapper.insert(result);
+            isSameResult(result);
         }
 
-        toUser = toUser + "一周内涨幅或者跌幅较大：";
+        toUser = toUser + "一周内涨幅或者跌幅较大："+ "\r\n";
         Collections.sort(listAr, new Comparator<Result>() {
             @Override
             public int compare(Result o1, Result o2) {
@@ -215,10 +261,10 @@ public class AnalyseService {
         });
         for(Result result : listAr){
             toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
-            resultMapper.insert(result);
+            isSameResult(result);
         }
 
-        toUser = toUser + "放量较多或者缩量较多：";
+        toUser = toUser + "放量较多或者缩量较多："+ "\r\n";
         Collections.sort(listRes, new Comparator<Result>() {
             @Override
             public int compare(Result o1, Result o2) {
@@ -232,10 +278,10 @@ public class AnalyseService {
         });
         for(Result result : listRes){
             toUser = toUser + result.getNumber() +" "+ result.getCode() +" " +result.getName() + "\r\n";
-            resultMapper.insert(result);
+            isSameResult(result);
         }
 
-        toUser = toUser + "最近两天出现次数：";
+        toUser = toUser + "最近两天出现次数："+ "\r\n";
         List<Map<String,Object>> list = resultMapper.getResult(LocalDate.now().plusDays(-1));
         for(Map<String,Object> map : list){
             toUser = toUser + map.get("name")+map.get("code")+" "+map.get("counts")+"   ";
@@ -248,11 +294,24 @@ public class AnalyseService {
         System.out.println("结果："+toUser);
         userService.send(toUser);
 
-        listSX.clear();listDis.clear();listAr.clear();listRes.clear();
+        listSX.clear();listDis5.clear();listDis.clear();listAr.clear();listRes.clear();
 
         System.out.println("analyse  result  end ..........");
     }
 
+    public void isSameResult(Result result){
+        QueryWrapper<Result> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(Result::getCode, result.getCode());
+        queryWrapper.lambda().eq(Result::getType, result.getType());
+        queryWrapper.orderByDesc("happentime");
+        queryWrapper.last("limit 1");
+        Result resultM = resultMapper.selectOne(queryWrapper);
+        if (resultM == null || resultM.getNumber() != result.getNumber()) {
+            resultMapper.insert(result);
+        }else{
+            System.out.println("结果重复");
+        }
+    }
     public void resultWindwos() throws IOException {
         FileWriter fileWritter = new FileWriter("C:\\Users\\heqiang\\Desktop\\shares.txt",true);
         fileWritter.write("=======================result start==="+ LocalDate.now()+"================" + "\r\n");

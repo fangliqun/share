@@ -28,8 +28,8 @@ public class GetCodeController {
     private CodeMapper codeMapper;//    private String sharesCodes ="sz002466,sh600678,sh603103";
 
     //3.添加定时任务
-//    @Scheduled(cron = "0/20 * * * * ?")
-    @Scheduled(cron = "0 00 17 ? * 7")
+//    @Scheduled(cron = "0/20 * * * * ?")  一般40分钟  异步同时请求次数多被屏蔽
+    @Scheduled(cron = "0 00 15 ? * 7")
     public void getShare() throws IOException, ParseException {
         System.out.println("start");
         QueryWrapper wrapper = new QueryWrapper<>();
@@ -99,7 +99,7 @@ public class GetCodeController {
 
             Code code = new Code();
             code.setCode(codes);
-            code.setName(shareData[0]);
+            code.setName(shareData[0].replace(" ",""));
             code.setExchang(exchang);
 
             codeMapper.insert(code);
@@ -107,26 +107,4 @@ public class GetCodeController {
 
         response.close();
     }
-
-//    private  void common(CloseableHttpResponse response) throws IOException, ParseException {
-//        HttpEntity entity = response.getEntity();
-//        //使用工具类EntityUtils，从响应中取出实体表示的内容并转换成字符串
-//        String string = EntityUtils.toString(entity, "utf-8");
-//        System.out.println(string);
-//        if(string.split("=")[1].length()>5){
-//            string = string.substring(string.indexOf("\"")+1,string.length()-2);
-//            String shareData[] = string.split(",");
-//            Shares shares = new Shares();
-//            shares.setName(shareData[0]);
-//            shares.setNowprice(Double.parseDouble(shareData[3]));
-//            shares.setNumber(Integer.parseInt(shareData[8])/100);
-//            shares.setTotal(Long.parseLong(shareData[9].split("\\.")[0])/10000);
-//            String dateFormat = "yyyy-MM-dd HH:mm:ss";
-//            SimpleDateFormat format = new SimpleDateFormat(dateFormat);
-//            shares.setHappentime(format.parse(shareData[30]+" "+shareData[31]));
-//
-//        }
-//
-//        response.close();
-//    }
 }

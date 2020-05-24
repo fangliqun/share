@@ -3,7 +3,7 @@
 <mapper namespace="make.money.share.mapper.ResultMapper">
 
     <select id="getResult" resultType="java.util.Map">
-       SELECT count(*) as counts,name,code from result  where happentime> (#{date}) GROUP BY name order by counts
+       SELECT count(*) as counts,name,code from result  where happentime> (#{date}) GROUP BY code order by counts
     </select>
 
 </mapper>

@@ -51,7 +51,8 @@ public class SharesService {
                 for (String data : datas) {
                     if (data.split("=")[1].length() > 5) {
                         Shares shares = new Shares();
-                        shares.setCode(data.substring(11,19));
+                        String code = data.substring(11,19);
+                        shares.setCode(code);
                         data = data.substring(data.indexOf("\"") + 1, data.length() - 2);
                         String shareData[] = data.split(",");
                         shares.setName(shareData[0]);
@@ -68,7 +69,7 @@ public class SharesService {
                         double nowprivce = shares.getNowprice();
                         shares.setOneday(nowprivce);
                         QueryWrapper<Shares> sharesQueryWrapper = new QueryWrapper<>();
-                        sharesQueryWrapper.lambda().eq(Shares::getName, shareData[0]);
+                        sharesQueryWrapper.lambda().eq(Shares::getCode, code);
                         sharesQueryWrapper.orderByDesc("happentime");
                         sharesQueryWrapper.last("limit 4");
                         List<Shares> sharesfive = sharesMapper.selectList(sharesQueryWrapper);
@@ -82,7 +83,7 @@ public class SharesService {
                         }
 
                         QueryWrapper<Shares> sharesQueryWrapper1 = new QueryWrapper<>();
-                        sharesQueryWrapper1.lambda().eq(Shares::getName, shareData[0]);
+                        sharesQueryWrapper1.lambda().eq(Shares::getCode, code);
                         sharesQueryWrapper1.orderByDesc("happentime");
                         sharesQueryWrapper1.last("limit 9");
                         List<Shares> sharesten = sharesMapper.selectList(sharesQueryWrapper1);
@@ -96,7 +97,7 @@ public class SharesService {
                         }
 
                         QueryWrapper<Shares> sharesQueryWrapper2 = new QueryWrapper<>();
-                        sharesQueryWrapper2.lambda().eq(Shares::getName, shareData[0]);
+                        sharesQueryWrapper2.lambda().eq(Shares::getCode, code);
                         sharesQueryWrapper2.orderByDesc("happentime");
                         sharesQueryWrapper2.last("limit 19");
                         List<Shares> sharestwentyday = sharesMapper.selectList(sharesQueryWrapper2);
@@ -110,7 +111,7 @@ public class SharesService {
                         }
 
                         QueryWrapper<Shares> sharesQueryWrapper3 = new QueryWrapper<>();
-                        sharesQueryWrapper3.lambda().eq(Shares::getName, shareData[0]);
+                        sharesQueryWrapper3.lambda().eq(Shares::getCode, code);
                         sharesQueryWrapper3.orderByDesc("happentime");
                         sharesQueryWrapper3.last("limit 29");
                         List<Shares> sharesthirtyday = sharesMapper.selectList(sharesQueryWrapper3);
@@ -124,7 +125,7 @@ public class SharesService {
                         }
 
                         QueryWrapper<Shares> queryWrapper = new QueryWrapper<>();
-                        queryWrapper.lambda().eq(Shares::getName, shareData[0]);
+                        queryWrapper.lambda().eq(Shares::getCode, code);
                         queryWrapper.orderByDesc("happentime");
                         queryWrapper.last("limit 1");
                         Shares sharesone = sharesMapper.selectOne(queryWrapper);

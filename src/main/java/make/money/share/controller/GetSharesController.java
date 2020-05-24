@@ -43,7 +43,7 @@ public class GetSharesController {
 
     List<Code> codeList;
 //    3.添加定时任务 13秒
-    @Scheduled(cron = "0 30 17 ? * 1-7")
+    @Scheduled(cron = "0 20 17 ? * 1-7")
     public void getShare() throws InterruptedException, IOException {
         FileWriter fileWritter = new FileWriter("C:\\Users\\heqiang\\Desktop\\err.txt",true);
         fileWritter.write("=======================getShare start==="+LocalDate.now()+"================" + "\r\n");
@@ -82,28 +82,25 @@ public class GetSharesController {
         analyseService.toTesult();
     }
 
-    @Scheduled(cron = "0 20 17 ? * 1-7")
-    public void getCode(){
+    @Scheduled(cron = "0 00 17 ? * 1-7")//最新代码
+    public void getCodeNew(){
         System.out.println("get all code");
         QueryWrapper<Code> codeQueryWrapper = new QueryWrapper<>();
         codeList = codeMapper.selectList(codeQueryWrapper);
     }
 
 //    @PostConstruct
+    // 更新代码和去空格
+    public void getCode(){
+        QueryWrapper<Code> codeQueryWrapper = new QueryWrapper<>();
+        codeList = codeMapper.selectList(codeQueryWrapper);
+        for(Code code : codeList){
+            updateCode(code);
+        }
+    }
+
     @Async
     public void  updateCode(Code code){
-//        UpdateWrapper<Result> resultUpdateWrapper = new UpdateWrapper<>();
-//        resultUpdateWrapper.eq("name", code.getName());
-//        Result result = new Result();
-//        result.setCode(code.getCode());
-//        resultMapper.update(result, resultUpdateWrapper);
-
-        //注意默认 导致所有数据为0
-//        UpdateWrapper<Shares> sharesUpdateWrapper = new UpdateWrapper<>();
-//        sharesUpdateWrapper.eq("name", code.getName());
-//        sharesUpdateWrapper.setSql("update shares set code");
-//        Shares shares = new Shares();
-//        shares.setCode(code.getCode());
         sharesMapper.updateCode(code.getName(),code.getCode());
     }
 
