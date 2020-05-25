@@ -66,7 +66,7 @@ public class GetSharesController {
                 count++;
             }
         }
-        Thread.sleep(1000*40);
+        Thread.sleep(1000*60*30);
         fileWritter.write("=======================getShare end======================" + "\r\n");
         fileWritter.write("\r\n\r\n\r\n");
         fileWritter.close();
